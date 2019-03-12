@@ -2,12 +2,14 @@
 
 const Store = require('store-prototype');
 const xhr = require('xhr');
+const constants = require('../../constants');
 
 const StepStore = new Store();
 
 let _currentStep = 0;
-let _availableSteps = 2;
-let _totalSteps = 4;
+let _availableSteps = 1;
+let _totalSteps = constants.TOTAL_STEPS;
+let _direction = 'next';
 
 const fetchAvailableStep = (callback) => {
 	xhr({
@@ -24,14 +26,17 @@ StepStore.extend({
 			currentStep: _currentStep,
 			availableSteps: _availableSteps,
 			totalSteps: _totalSteps,
+      direction: _direction,
 		};
 	},
 	next () {
 		_currentStep = Math.min(_currentStep + 1, _availableSteps);
+    _direction = 'next';
 		this.notifyChange();
 	},
 	prev () {
 		_currentStep = Math.max(_currentStep - 1, 0);
+    _direction = 'prev';
 		this.notifyChange();
 	},
 	update () {
@@ -40,7 +45,8 @@ StepStore.extend({
 		fetchAvailableStep((err, response, data) => {
 			try {
 				data = JSON.parse(data);
-				const newStep = data.step || 1;
+				console.log(data);
+				const newStep = data.availableSteps || 1;
 				this.setCurrentStep(newStep);
 			} catch(e) {
 				console.error('Error: unable to load status data from the API', err, response);
@@ -56,6 +62,7 @@ StepStore.extend({
 		}
 		if (_currentStep > _availableSteps) {
 			_currentStep = _availableSteps;
+      _direction = 'prev';
 			changed = true;
 		}
 		if (changed) {
